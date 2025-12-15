@@ -1,5 +1,5 @@
 #User-defined libraries
-from lib import usgs_import, weather_import, census_import
+from ingestion_lib import usgs_import, weather_import, census_import
 from datetime import datetime, timedelta
 
 #CSV Directory path
