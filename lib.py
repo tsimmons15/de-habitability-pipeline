@@ -43,16 +43,29 @@ def usgs_import(table_name, csv_file, pull_start, pull_end):
 
 def weather_import(table_name, csv_file, search_time, search_lat, search_lon):
     payload = {
-        "lat":"38.83",
-        "lon":"-122.83",
-        "dt":"1765454400",
+        "lat":search_lat,
+        "lon":search_lon,
+        "dt":search_time,
         "appid":api_config["weather_key"]
     }
     r = requests.get(api_endpoints["weather"], params=payload)
     #print(r.text)
 
     json_obj = json.loads(r.text)
-    df = pd.json_normalize(json_obj)
+    weather_result = json_obj.copy()
+    del weather_result["cloud_cover"]
+    del weather_result["humidity"]
+    del weather_result["precipitation"]
+    del weather_result["temperature"]
+    del weather_result["pressure"]
+    del weather_result["wind"]
+
+    weather_result["cloud_cover"] = json_obj["cloud_cover"]["afternoon"]
+    weather_result["humidity"] = json_obj["humidity"]["afternoon"]
+    weather_result["precipitation"] = json_obj["precipitation"["afternoon"]
+
+
+    df = pd.json_normalize(weather_result)
 
     df.to_csv(csv_file, index=False, encoding='utf-8')
 
@@ -94,7 +107,9 @@ def census_import(table_name, csv_file, geocode_table, geocode_file):
         if r.status_code == requests.codes.ok and len(r.text) > 2:
             geocode_json = json.loads(r.text)
             for g in geocode_json:
-                if g["country"] == "US":
+                if g["country"] == "US" and len(g) < 50:
+                    if "local_names" in g:
+                        del g["local_names"]
                     geocode_result.append(g)
 
         else:
