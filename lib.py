@@ -26,19 +26,28 @@ def usgs_import(table_name, csv_file, pull_start, pull_end):
     json_geometry = json_obj["features"][0]["geometry"]["coordinates"]
     json_properties["latitude"] = json_geometry[1]
     json_properties["longitude"] = json_geometry[0]
+    json_properties["place"] = json_properties["place"].replace(",", "|")
+    json_properties["title"] = json_properties["title"].replace(",", "|")
     del json_properties["url"]
     del json_properties["detail"]
+    del json_properties["sources"]
+    del json_properties["types"]
+    del json_properties["ids"]
+
     json_properties["time"] = datetime.fromtimestamp(json_properties["time"]/1000)
     json_properties["updated"] = datetime.fromtimestamp(json_properties["updated"]/1000)
+    #print(json_properties)
     df = pd.json_normalize(json_properties)
 
     df.to_csv(csv_file, index=False, encoding='utf-8')
 
-    uploadCSV(table_name, csv_file)
+    cols = "mag, place, time, updated, tz, felt, cdi, mmi, alert, status, tsunami, sig, net, code, nst, dmin, rms, gap, \"magType\", type, title, latitude, longitude"
+
+    uploadCSV(table_name, csv_file, cols=cols)
 
     # Get rid of stale data
-    if os.path.exists(csv_file):
-        os.remove(csv_file)
+    #if os.path.exists(csv_file):
+    #    os.remove(csv_file)
 
 
 def weather_import(table_name, csv_file, search_time, search_lat, search_lon):
@@ -62,12 +71,17 @@ def weather_import(table_name, csv_file, search_time, search_lat, search_lon):
 
     weather_result["cloud_cover"] = json_obj["cloud_cover"]["afternoon"]
     weather_result["humidity"] = json_obj["humidity"]["afternoon"]
-    weather_result["precipitation"] = json_obj["precipitation"["afternoon"]
-
+    weather_result["precipitation"] = json_obj["precipitation"]["afternoon"]
+    weather_result["pressure"] = json_obj["pressure"]["afternoon"]
+    weather_result["temperature_max"] = json_obj["temperature"]["max"]
+    weather_result["temperature_min"] = json_obj["temperature"]["min"]
+    weather_result["wind"] = json_obj["wind"]["max"]["speed"]
 
     df = pd.json_normalize(weather_result)
 
     df.to_csv(csv_file, index=False, encoding='utf-8')
+
+    cols = ""
 
     uploadCSV(table_name, csv_file)
 
@@ -122,6 +136,10 @@ def census_import(table_name, csv_file, geocode_table, geocode_file):
     geocode_df = pd.json_normalize(geocode_result)
     df.to_csv(geocode_file, index=False, encoding='utf-8')
 
+
+    census_cols = ""
+    geocode_cols = ""
+
     uploadCSV(table_name, csv_file)
     uploadCSV(geocode_table, geocode_file)
 
@@ -133,7 +151,7 @@ def census_import(table_name, csv_file, geocode_table, geocode_file):
 
     return geocode_result
 
-def uploadCSV(table_name, csv_file, sep=','):
+def uploadCSV(table_name, csv_file, cols, sep=','):
     conn = None
     try:
         # Connect to the PostgreSQL database
@@ -141,10 +159,22 @@ def uploadCSV(table_name, csv_file, sep=','):
         cursor = conn.cursor()
 
         # Open the CSV file and use copy_from
-        with open(csv_file, 'r') as f:
+        with open(csv_file, 'r') as fh:
             # Skip the header row if present in the CSV
-            f.readline()
-            cursor.copy_from(f, table_name, sep=sep)
+            fh.readline()
+            #cursor.copy_from(f, table_name, columns=cols, sep=sep)
+            cursor.copy_expert(f"""
+                COPY tsimmons.{table_name} (
+                    {cols}
+                )
+                FROM STDIN
+                WITH (
+                    FORMAT csv,
+                    DELIMITER ',',
+                    QUOTE '"',
+                    ESCAPE '\\'
+                )
+            """, fh)
 
         # Commit the transaction
         conn.commit()
