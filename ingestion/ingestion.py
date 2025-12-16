@@ -11,12 +11,15 @@ usgs_start = usgs_end - timedelta(days=1)
 
 usgs_import("usgs_raw", f"{csv_dir}/usgs_raw.csv", usgs_start, usgs_end)
 
-#geocode_json = census_import("census_raw", f"{csv_dir}/census_raw.csv", "geocode_raw", f"{csv_dir}/geocode_raw.csv")
+geocode_json = census_import("census_raw", f"{csv_dir}/census_raw.csv", "geocode_raw", f"{csv_dir}/geocode_raw.csv")
 
 #print(geocode_json)
-#for g in geocode_json:
-#    dt = usgs_start
-#    while dt <= usgs_end:
-#        #print(f"Running weather import for {dt}, {g['lat']}, {g['lon']}")
-#        weather_import("weather_raw", f"{csv_dir}/weather_raw.csv", dt.timestamp(), g["lat"], g["lon"])
-#        dt = dt + timedelta(hours=1)
+i = 0
+for g in geocode_json:
+    if i > 50:
+        dt = usgs_start
+        while dt <= usgs_end:
+            #print(f"Running weather import for {dt}, {g['lat']}, {g['lon']}")
+            weather_import("weather_raw", f"{csv_dir}/weather_raw.csv", dt.timestamp(), g["lat"], g["lon"])
+            dt = dt + timedelta(hours=1)
+    i += 1
