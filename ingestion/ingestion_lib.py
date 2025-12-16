@@ -54,7 +54,7 @@ def weather_import(table_name, weather_file, search_time, search_lat, search_lon
     payload = {
         "lat":search_lat,
         "lon":search_lon,
-        "dt":search_time,
+        "date":search_time,
         "appid":api_config["weather_key"]
     }
     r = requests.get(api_endpoints["weather"], params=payload)
