@@ -2,9 +2,6 @@ pipeline {
     agent any
 
     environment {
-        PYSPARK_PYTHON        = "/usr/bin/python3.12"
-        PYSPARK_DRIVER_PYTHON = "/usr/bin/python3.12"
-        SPARK_SUBMIT          = "spark-submit"
     }
     stages {
         stage('Upgrade pip') {
@@ -24,12 +21,15 @@ pipeline {
 		    echo "${WORKSPACE}"
 		    which python
                 '''
+		env.PYTHON = env.WORKSPACE".venv/bin/python"
+		env.SPARK_SUBMIT = env.WORKSPACE".venv/bin/spark-submit"
 		
             }
         }
     	stage('2. Verify pip install') {
     	    steps {
         		sh '''
+			    alias python='${PYTHON}'
                             python --version
 			    which python
         		    python -m pip list
@@ -40,11 +40,11 @@ pipeline {
         stage('3. Data Integration (Postgres Load)') {
             steps {
                 echo "Running Data Integration — Loading API data into Postgres..."
-                sh '''
-                   python --version
-		   which python
-                   python -m main ingestion
-                '''
+                #sh '''
+                #   python --version
+		#   which python
+                #   python -m main ingestion
+                #'''
             }
         }
         
