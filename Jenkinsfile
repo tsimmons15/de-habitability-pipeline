@@ -19,14 +19,17 @@ pipeline {
             steps {
                 sh '''
                     python3.12 -m venv .venv
-		            source .venv/bin/activate
-		            python -m pip install -r requirements.txt
+		    source .venv/bin/activate
+		    python -m pip install -r requirements.txt
+		    python --version
                 '''
             }
         }
     	stage('2. Verify pip install') {
     	    steps {
         		sh '''
+                            python --version
+			    which python
         		    python -m pip list
         		'''
     	    }
@@ -36,6 +39,8 @@ pipeline {
             steps {
                 echo "Running Data Integration — Loading API data into Postgres..."
                 sh '''
+                   python --version
+		   which python
                    python -m main ingestion
                 '''
             }
