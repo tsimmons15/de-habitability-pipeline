@@ -6,7 +6,11 @@ pipeline {
         PYSPARK_DRIVER_PYTHON = "/usr/bin/python3.12"
         SPARK_SUBMIT          = "spark-submit"
     }
-
+    pre {
+        always {
+            deleteDir()
+        }
+    }
     stages {
         stage('Upgrade pip') {
             steps {
@@ -57,6 +61,12 @@ pipeline {
                     echo "Placeholder"
                 '''
             }
+        }
+    }
+    post {
+        // This block runs after the entire pipeline finishes
+        always {
+            deleteDir() /* Deletes the workspace content */
         }
     }
 }
