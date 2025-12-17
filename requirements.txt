@@ -13,3 +13,4 @@ requests==2.32.5
 urllib3==2.6.2
 pandas==2.3.3
 hdfs==2.7.3
+pytest==9.0.2
