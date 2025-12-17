@@ -21,8 +21,10 @@ pipeline {
 		    echo "${WORKSPACE}"
 		    which python
                 '''
-		env.PYTHON = env.WORKSPACE".venv/bin/python"
-		env.SPARK_SUBMIT = env.WORKSPACE".venv/bin/spark-submit"
+		script {
+		    env.PYTHON = "${env.WORKSPACE}/.venv/bin/python"
+		    env.SPARK_SUBMIT = "${env.WORKSPACE}/.venv/bin/spark-submit"
+		}
 		
             }
         }
