@@ -16,8 +16,6 @@ pipeline {
                     python3.12 -m venv .venv
 		    source .venv/bin/activate
 		    python -m pip install -r requirements.txt
-		    echo "${WORKSPACE}"
-		    which python
                 '''
 		script {
 		    env.PYTHON = "${env.WORKSPACE}/.venv/bin/python"
@@ -30,8 +28,6 @@ pipeline {
     	    steps {
         		sh '''
 			    alias python='${PYTHON}'
-                            python --version
-			    which python
         		    python -m pip list
         		'''
     	    }
@@ -40,11 +36,10 @@ pipeline {
         stage('3. Data Integration (Postgres Load)') {
             steps {
                 echo "Running Data Integration — Loading API data into Postgres..."
-                //sh '''
-                //   python --version
-		//   which python
-                //   python -m main ingestion
-                //'''
+                sh '''
+		   alias python='${PYTHON}'
+                   python -m main ingestion
+                '''
             }
         }
         
@@ -52,6 +47,8 @@ pipeline {
             steps {
                 echo "Running Silver layer Spark transformations..."
                 sh '''
+		    alias python='${PYTHON}'
+		    alias spark-submit='${SPARK_SUBMIT}'
                     #python -m main cleaning
                 '''
             }
@@ -60,6 +57,8 @@ pipeline {
         stage('5. Create Gold Table (Hive)') {
             steps {
                 sh '''
+		    alias python='${PYTHON}'
+                    alias spark-submit='${SPARK_SUBMIT}'
                     #python -m main transformation
                 '''
             }
