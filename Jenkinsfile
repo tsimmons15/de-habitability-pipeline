@@ -41,7 +41,7 @@ pipeline {
             steps {
                 echo "Running Data Integration — Loading API data into Postgres..."
                 sh '''
-                   echo "Placeholder"
+                   python -m main ingestion
                 '''
             }
         }
@@ -50,7 +50,7 @@ pipeline {
             steps {
                 echo "Running Silver layer Spark transformations..."
                 sh '''
-                    echo "Placeholder"
+                    #python -m main cleaning
                 '''
             }
         }
@@ -58,7 +58,7 @@ pipeline {
         stage('5. Create Gold Table (Hive)') {
             steps {
                 sh '''
-                    echo "Placeholder"
+                    #python -m main transformation
                 '''
             }
         }
