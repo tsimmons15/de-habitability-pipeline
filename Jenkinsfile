@@ -1,0 +1,62 @@
+pipeline {
+    agent any
+
+    environment {
+        PYSPARK_PYTHON        = "/usr/bin/python3.12"
+        PYSPARK_DRIVER_PYTHON = "/usr/bin/python3.12"
+        SPARK_SUBMIT          = "spark-submit"
+    }
+
+    stages {
+        stage('Upgrade pip') {
+            steps {
+                sh '''
+                    python3.12 -m pip install --upgrade pip setuptools wheel
+                '''
+            }
+        }
+        
+        stage('1. Setup venv') {
+            steps {
+                sh '''
+                    python3.12 -m venv .venv
+		            source .venv/bin/activate
+		            python -m pip install -r requirements.txt
+                '''
+            }
+        }
+    	stage('2. Verify pip install') {
+    	    steps {
+        		sh '''
+        		    python -m pip list
+        		'''
+    	    }
+    	}
+
+        stage('3. Data Integration (Postgres Load)') {
+            steps {
+                echo "Running Data Integration — Loading API data into Postgres..."
+                sh '''
+                   echo "Placeholder"
+                '''
+            }
+        }
+        
+        stage('4. Run Silver Transformations') {
+            steps {
+                echo "Running Silver layer Spark transformations..."
+                sh '''
+                    echo "Placeholder"
+                '''
+            }
+        }
+       
+        stage('5. Create Gold Table (Hive)') {
+            steps {
+                sh '''
+                    echo "Placeholder"
+                '''
+            }
+        }
+    }
+}
