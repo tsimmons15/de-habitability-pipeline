@@ -5,6 +5,7 @@ pipeline {
         stage('Upgrade pip') {
             steps {
                 sh '''
+		    whereis python
                     python3.12 -m pip install --upgrade pip setuptools wheel
                 '''
             }
