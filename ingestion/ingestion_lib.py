@@ -1,3 +1,5 @@
+from lib.logger import setup_logger
+
 import requests, json, psycopg2, csv, io, os, sys, pandas as pd, re
 from datetime import datetime
 
@@ -10,9 +12,9 @@ api_endpoints = {
     "census":"https://api.census.gov/data/2019/pep/charagegroups"
 }
 
-
 #Pull in the USGS data
 def usgs_import(table_name, usgs_file, pull_start, pull_end):
+    logger = setup_logger("usgs_ingestion", "%(asctime)s | %(levelname)s | %(name)s | %(filename)s:%(lineno)d | %(message)s")
     payload = {
         'format':'geojson',
         'starttime':pull_start,
@@ -22,28 +24,70 @@ def usgs_import(table_name, usgs_file, pull_start, pull_end):
     r = requests.get(api_endpoints["usgs"], params=payload)
 
     json_obj = json.loads(r.text)
-    json_properties = json_obj["features"][0]["properties"]
-    json_geometry = json_obj["features"][0]["geometry"]["coordinates"]
-    json_properties["latitude"] = json_geometry[1]
-    json_properties["longitude"] = json_geometry[0]
-    json_properties["place"] = json_properties["place"].replace(",", "|")
-    json_properties["title"] = json_properties["title"].replace(",", "|")
+    if "features" not in json_obj:
+        logger.error("Issue with the usgs data, no features object.")
+        sys.exit(5)
+    json_obj = json_obj["features"]
+    if len(json_obj) <= 1 or "properties" not in json_obj[0]:
+        logger.error("Issue with the usgs data, malformed features list. Length: {len(json_obj)} or 'properties' not in features list.")
+        sys.exit(5)
+
+    json_properties = json_obj[0]["properties"]
+
+    if "geometry" not in json_obj[0]:
+        logger.error("Issue with the usgs data, no geometry in features.")
+        sys.exit(5)
+    json_geometry = json_obj[0]["geometry"]
+    
+    if "coordinates" not in json_geometry:
+        logger.error("Issue with the usgs data, no coordinates in the geometry feature.")
+        sys.exit(5)
+    json_geometry = json_geometry["coordinates"]
+    
+    if len(json_geometry) < 2:
+        logger.warn("Issue with the usgs data, latitude or longitude is missing.")
+        json_properties["latitude"] = None
+        json_properties["longitude"] = None
+    else:
+        json_properties["latitude"] = json_geometry[1]
+        json_properties["longitude"] = json_geometry[0]
+
+    if "place" not in json_properties or len(json_properties["place"]) < 2:
+        logger.warn("Issue with the usgs data, place is missing or improperly formed.")
+        json_properties["place"] = None
+    else:
+        json_properties["place"] = json_properties["place"].replace(",", "|")
+
+    if "title" not in json_properties or len(json_properties["title"]) < 2:
+        logger.warn("Issue with the usgs data, title is missing or improperly formed.")
+        json_properties["title"] = None
+    else:
+        json_properties["title"] = json_properties["title"].replace(",", "|")
+
     del json_properties["url"]
     del json_properties["detail"]
     del json_properties["sources"]
     del json_properties["types"]
     del json_properties["ids"]
-
-    json_properties["time"] = datetime.fromtimestamp(json_properties["time"]/1000)
-    json_properties["updated"] = datetime.fromtimestamp(json_properties["updated"]/1000)
-    #print(json_properties)
+    
+    if "time" not in json_properties:
+        logger.warn("Issue with the usgs data, time is missing.")
+    else:
+        json_properties["time"] = datetime.fromtimestamp(json_properties["time"]/1000)
+    if "updated" not in json_properties:
+        logger.warn("Issue with the usgs data, updated is missing.")
+    else:
+        json_properties["updated"] = datetime.fromtimestamp(json_properties["updated"]/1000)
+    
     df = pd.json_normalize(json_properties)
 
     df.to_csv(usgs_file, index=False, encoding='utf-8')
+    logger.info("CSV file for usgs data written.")
 
     cols = "mag, place, time, updated, tz, felt, cdi, mmi, alert, status, tsunami, sig, net, code, nst, dmin, rms, gap, \"magType\", type, title, latitude, longitude"
 
     uploadCSV(table_name, usgs_file, cols=cols)
+    logger.info("CSV file uploaded to postgresql.")
 
     # Get rid of stale data
     #if os.path.exists(usgs_file):
@@ -58,50 +102,44 @@ def weather_import(table_name, weather_file, search_time, search_lat, search_lon
         "appid":api_config["weather_key"]
     }
     r = requests.get(api_endpoints["weather"], params=payload)
-    #print(r.text)
+    logger = setup_logger("weather_ingestion", "%(asctime)s | %(levelname)s | %(name)s | %(filename)s:%(lineno)d | %(message)s")
 
     json_obj = json.loads(r.text)
     weather_result = json_obj.copy()
-    if "cloud_cover" in weather_result:
-        del weather_result["cloud_cover"]
-        weather_result["cloud_cover"] = json_obj["cloud_cover"]["afternoon"]
-    else:
-        weather_result["cloud_cover"] = None
-    if "humidity" in weather_result:
-        del weather_result["humidity"]
-        weather_result["humidity"] = json_obj["humidity"]["afternoon"]
-    else:
-        weather_result["humidity"] = None
-    if "precipitation" in weather_result:
-        del weather_result["precipitation"]
-        weather_result["precipitation"] = json_obj["precipitation"]["total"]
-    else:
-        weather_result["precipitation"] = None
+    resetValueOrDefault(weather_result, ["cloud_cover","afternoon"], weather_result, ["cloud_cover"])
+    logger.info(f"Value of weather_result['cloud_cover']: {weather_result['cloud_cover']}")
+
+    resetValueOrDefault(weather_result, ["humidity", "afternoon"], weather_result, ["humidity"])
+    logger.info(f"Value of weather_result['humidity']: {weather_result['humidity']}")
+
+    resetValueOrDefault(weather_result, ["precipitation", "total"], weather_result, ["precipitation"])
+    logger.info(f"Value of weather_result['precipitation']: {weather_result['precipitation']}")
+
+    resetValueOrDefault(weather_result, ["pressure", "afternoon"], weather_result, ["pressure"])
+    logger.info(f"Value of weather_result['pressure']: {weather_result['pressure']}")
+
+    resetValueOrDefault(weather_result, ["wind", "max", "speed"], weather_result, ["wind"])
+    logger.info(f"Value of weather_result['wind']: {weather_result['wind']}")
+    
     if "temperature" in weather_result:
         del weather_result["temperature"]
         weather_result["temperature_min"] = json_obj["temperature"]["min"]
         weather_result["temperature_max"] = json_obj["temperature"]["max"]
+        logger.info(f"Temperatures: {weather_result['temperature_min']}, {weather_result['temperature_max']}")
     else:
+        logger.warn("Temperature is missing from the weather pull. Setting temperatures to None")
         weather_result["temperature_min"] = None
         weather_result["temperature_max"] = None
-    if "pressure" in weather_result:
-        del weather_result["pressure"]
-        weather_result["pressure"] = json_obj["pressure"]["afternoon"]
-    else:
-        weather_result["pressure"] = None
-    if "wind" in weather_result:
-        del weather_result["wind"]
-        weather_result["wind"] = json_obj["wind"]["max"]["speed"]
-    else:
-        weather_result["wind"] = None
 
     df = pd.json_normalize(weather_result)
 
     df.to_csv(weather_file, index=False, encoding='utf-8')
+    logger.info("Weather data written to CSV.")
 
     cols = "lat, lon, tz, date, units, cloud_cover, humidity, precipitation, temperature_min, temperature_max, pressure, wind"
 
     uploadCSV(table_name, weather_file, cols)
+    logger.info("CSV uploaded to postgresql.")
 
     # Get rid of stale data
     #if os.path.exists(weather_file):
@@ -112,6 +150,8 @@ def census_import(census_table, census_file, geocode_table, geocode_file):
     geocode_cols = ["name", "lat", "lon", "country", "state"]
     
     pattern = re.compile("(.+) County")
+
+    logger = setup_logger("census_ingestion", "%(asctime)s | %(levelname)s | %(name)s | %(filename)s:%(lineno)d | %(message)s")
 
     payload = {
         "get":"NAME,POP",
@@ -127,6 +167,7 @@ def census_import(census_table, census_file, geocode_table, geocode_file):
     for c in json_obj[1:]:
         census_result.append(getDict(census_cols,c))
         (area, state) = c[0].split(",")
+        logger.info(f"Census data found, finding geocode information for: ({area}, {state})")
         match = pattern.match(area)
         if match is not None or pattern.groups > 1:
             area_name = match.group(1)
@@ -149,21 +190,24 @@ def census_import(census_table, census_file, geocode_table, geocode_file):
                 if g["country"] == "US":
                     if "local_names" in g:
                         del g["local_names"]
+                    logger.info(f"Geocode result found, appending {g}")
                     geocode_result.append(g)
     
         else:
-            #print(f"Unable to get details for {area_name}({area}) in {state}")
-            pass
-
+            logger.warn(f"Unable to get details for {area_name}({area}) in {state}")
 
     census_df = pd.json_normalize(census_result)
     census_df.to_csv(census_file, index=False, encoding='utf-8')
+    logger.info("Census data written to CSV")
 
     geocode_df = pd.json_normalize(geocode_result)
     geocode_df.to_csv(geocode_file, index=False, encoding='utf-8')
+    logger.info("Geocode data written to CSV")
 
     uploadCSV(census_table, census_file, ", ".join(census_cols))
+    logger.info("Census CSV uploaded to postgresql.")
     uploadCSV(geocode_table, geocode_file, ", ".join(geocode_cols))
+    logger.info("Geocode CSV uploaded to postgresql.")
 
     # Get rid of stale data
     #if os.path.exists(census_file):
@@ -206,13 +250,45 @@ def uploadCSV(table_name, csv_file, cols, sep=','):
         conn.commit()
 
     except Exception as e:
-        print(f"Error: {e}")
+        logger.error(f"Error: {e}")
         if conn:
             conn.rollback()
     finally:
         if conn:
             cursor.close()
             conn.close()
+
+
+def resetValueOrDefault(new_dict, new_key_list, old_dict, old_key_list, default=None):
+    newValue = retrieveNestedValue(old_dict, old_key_list, default)
+
+    del old_dict[old_key_list[0]]
+
+    return setNestedValue(new_dict, new_key_list, newValue)
+
+
+def setNestedValue(dictionary, key_list, value):
+    current = dictionary
+    length = len(key_list) - 1
+    for (i, k) in enumerate(key_list):
+        if k not in current or not isinstance(current[k], dict):
+            if i == length:
+                current[k] = value
+                break
+            else:
+                current[k] = {}
+        current = current[k]
+
+    return True
+
+def retrieveNestedValue(dictionary, key_list, default=None):
+    result = dictionary
+    for k in key_list:
+        if not isinstance(result, dict) or k not in result:
+            return default
+        else:
+            result = result[k]
+    return result
 
 
 def readConf(conf_file):
