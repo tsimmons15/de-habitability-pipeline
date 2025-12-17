@@ -291,18 +291,21 @@ def retrieveNestedValue(dictionary, key_list, default=None):
     return result
 
 
-def readConf(conf_file):
-    result = ""
-    with open(conf_file, "r") as fh:
-        result = json.loads(fh.read())
-    return result
+def parseConf():
+    db_text = os.environ.get('db_conf')
+    weather_key = os.environ.get('weather_key')
 
-conf_root = r"/home/ec2-user/ukus18nov/tsimmons/conf/"
-conf_files = {
-    "db":"db.conf", "api":"api.conf"
-}
+    if not db_text or not weather_key:
+        logger.error("Unable to parse weather api key or the db configuration environment variables. Please check them.")
+        sys.exit(4)
 
-# db configuration details
-db_config = readConf(conf_root + conf_files["db"])
-api_config = readConf(conf_root + conf_files["api"])
+    db_config = json.loads(db_text)
+    api_config = {"weather_key":weather_key}
 
+def invalidDirectory(directory):
+    return not directory or not  os.file.exists(directory)
+
+
+# db configuration and api key details
+db_config = {} 
+api_config = {}
