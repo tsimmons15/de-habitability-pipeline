@@ -27,7 +27,7 @@ pipeline {
     	stage('2. Verify pip install') {
     	    steps {
         		sh '''
-			    alias python='${PYTHON}'
+			    source .venv/bin/activate
         		    python -m pip list
         		'''
     	    }
@@ -37,7 +37,7 @@ pipeline {
             steps {
                 echo "Running Data Integration — Loading API data into Postgres..."
                 sh '''
-		   alias python='${PYTHON}'
+		   source .venv/bin/activate
                    python -m main ingestion
                 '''
             }
@@ -47,9 +47,8 @@ pipeline {
             steps {
                 echo "Running Silver layer Spark transformations..."
                 sh '''
-		    alias python='${PYTHON}'
-		    alias spark-submit='${SPARK_SUBMIT}'
-                    #python -m main cleaning
+                    source .venv/bin/activate
+		    #python -m main cleaning
                 '''
             }
         }
@@ -57,9 +56,8 @@ pipeline {
         stage('5. Create Gold Table (Hive)') {
             steps {
                 sh '''
-		    alias python='${PYTHON}'
-                    alias spark-submit='${SPARK_SUBMIT}'
-                    #python -m main transformation
+                    source .venv/bin/activate
+		    #python -m main transformation
                 '''
             }
         }
