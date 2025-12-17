@@ -40,11 +40,11 @@ pipeline {
         stage('3. Data Integration (Postgres Load)') {
             steps {
                 echo "Running Data Integration — Loading API data into Postgres..."
-                #sh '''
-                #   python --version
-		#   which python
-                #   python -m main ingestion
-                #'''
+                //sh '''
+                //   python --version
+		//   which python
+                //   python -m main ingestion
+                //'''
             }
         }
         
