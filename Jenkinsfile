@@ -35,10 +35,10 @@ pipeline {
 
 	stage('3. Setup Jenkins file system, mainly log and csv dirs.') {
 	    steps {
-		sh '''
+		script {
 		    mkdir "${jenkins_log_dir}"
 		    mkdir "${csv_dir}"
-		'''
+		}
 	    }
 	}
         stage('4. Data Integration (Postgres Load)') {
