@@ -4,19 +4,19 @@ pipeline {
     stages {
         stage('Upgrade pip') {
             steps {
-                sh '''
+                sh """
                     python3.12 -m pip install --upgrade pip setuptools wheel
-                '''
+                """
             }
         }
         
         stage('1. Setup venv') {
             steps {
-                sh '''
+                sh """
                     python3.12 -m venv .venv
 		    source .venv/bin/activate
 		    python -m pip install -r requirements.txt
-                '''
+                """
 		script {
 		    env.PYTHON = "${env.WORKSPACE}/.venv/bin/python"
 		    env.SPARK_SUBMIT = "${env.WORKSPACE}/.venv/bin/spark-submit"
@@ -26,46 +26,46 @@ pipeline {
         }
     	stage('2. Verify pip install') {
     	    steps {
-        		sh '''
+        		sh """
 			    source .venv/bin/activate
         		    python -m pip list
-        		'''
+        		"""
     	    }
     	}
 
 	stage('3. Setup Jenkins file system, mainly log and csv dirs.') {
 	    steps {
-		sh '''
+		sh """
 		    mkdir "$params.jenkins_log_dir"
 		    mkdir "$params.csv_dir"
-		'''
+		"""
 	    }
 	}
         stage('4. Data Integration (Postgres Load)') {
             steps {
                 echo "Running Data Integration — Loading API data into Postgres..."
-                sh '''
+                sh """
 		   source .venv/bin/activate
                    python -m main ingestion
-                '''
+                """
             }
         }
         stage('5. Run Silver Transformations') {
             steps {
                 echo "Running Silver layer Spark transformations..."
-                sh '''
+                sh """
                     source .venv/bin/activate
 		    #python -m main cleaning
-                '''
+                """
             }
         }
        
         stage('6. Create Gold Table (Hive)') {
             steps {
-                sh '''
+                sh """
                     source .venv/bin/activate
 		    #python -m main transformation
-                '''
+                """
             }
         }
     }
