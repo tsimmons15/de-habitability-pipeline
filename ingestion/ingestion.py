@@ -24,7 +24,7 @@ def start():
     logger.info(f"Ingestion called for period: {usgs_start} to {usgs_end}")
 
     logger.info("Starting the usgs pull.")
-    sanitized_dt = sanitize_filename(usgs_end.strftime("%Y-%m-%d %H:%M:%S")
+    sanitized_dt = sanitize_filename(usgs_end.strftime("%Y-%m-%d %H:%M:%S"))
     usgs_filename = f"{sanitized_dt}_usgs_raw.csv"
     usgs_filename = usgs_filename.replace(' ', '_')
     logger.info(f"USGS raw data directory: {csv_dir}/{usgs_filename}")
