@@ -12,9 +12,10 @@ api_endpoints = {
     "census":"https://api.census.gov/data/2019/pep/charagegroups"
 }
 
+logger = setup_logger("usgs_ingestion", "%(asctime)s | %(levelname)s | %(name)s | %(filename)s:%(lineno)d | %(message)s")
+
 #Pull in the USGS data
 def usgs_import(table_name, usgs_file, pull_start, pull_end):
-    logger = setup_logger("usgs_ingestion", "%(asctime)s | %(levelname)s | %(name)s | %(filename)s:%(lineno)d | %(message)s")
     payload = {
         'format':'geojson',
         'starttime':pull_start,
@@ -102,7 +103,6 @@ def weather_import(table_name, weather_file, search_time, search_lat, search_lon
         "appid":api_config["weather_key"]
     }
     r = requests.get(api_endpoints["weather"], params=payload)
-    logger = setup_logger("weather_ingestion", "%(asctime)s | %(levelname)s | %(name)s | %(filename)s:%(lineno)d | %(message)s")
 
     json_obj = json.loads(r.text)
     weather_result = json_obj.copy()
@@ -150,8 +150,6 @@ def census_import(census_table, census_file, geocode_table, geocode_file):
     geocode_cols = ["name", "lat", "lon", "country", "state"]
     
     pattern = re.compile("(.+) County")
-
-    logger = setup_logger("census_ingestion", "%(asctime)s | %(levelname)s | %(name)s | %(filename)s:%(lineno)d | %(message)s")
 
     payload = {
         "get":"NAME,POP",
@@ -224,6 +222,7 @@ def uploadCSV(table_name, csv_file, cols, sep=','):
     print(f"Uploading data from {csv_file} to {table_name} using {cols}")
     conn = None
     try:
+        print(db_config)
         # Connect to the PostgreSQL database
         conn = psycopg2.connect(**db_config)
         cursor = conn.cursor()
