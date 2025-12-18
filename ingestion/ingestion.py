@@ -31,7 +31,14 @@ def start():
     usgs_filename = f"{sanitized_dt}_usgs_raw.csv"
     usgs_filename = usgs_filename.replace(' ', '_')
     logger.info(f"USGS raw data directory: {csv_dir}/{usgs_filename}")
-    usgs_import("usgs_raw", f"{csv_dir}/{usgs_filename}", usgs_start, usgs_end)
+    reprocess = os.environ.get('REPROCESS')
+    
+    if reprocess is not None and reprocess != 'False':
+        usgs_import("usgs_raw", f"{csv_dir}/{usgs_filename}", usgs_start, usgs_end)
+
+    cols = "mag, place, time, updated, tz, felt, cdi, mmi, alert, status, tsunami, sig, net, code, nst, dmin, rms, gap, \"magType\", type, title, latitude, longitude"
+    uploadCSV("usgs_raw", f"{csv_dir}/{usgs_filename}", cols=cols)
+    logger.info("CSV file uploaded to postgresql.")
     
     logger.info("Starting the census and geocode pull.")
     census_filename = f"{sanitized_dt}_census_raw.csv"
@@ -41,7 +48,26 @@ def start():
     geocode_filename = geocode_filename.replace(' ', '_')
     logger.info(f"Geocode raw data directory: {csv_dir}/{geocode_filename}")
 
-    geocode_json = census_import("census_raw", f"{csv_dir}/{census_filename}", "geocode_raw", f"{csv_dir}/{geocode_filename}")
+    geocode_json = {}
+    if reprocess is not None and reprocess != 'False':
+        geocode_json = census_import("census_raw", f"{csv_dir}/{census_filename}", "geocode_raw", f"{csv_dir}/{geocode_filename}")
+    else:
+        data = []
+        with open(f"{csv_dir}/{census_filename}", mode='r', encoding='utf-8') as fh:
+        # DictReader maps each row to a dictionary with header keys
+        csv = csv.DictReader(fh)
+        for row in csv:
+            data.append(row)
+        geocode_json = json.dumps(data)
+
+
+    cols = "name, pop, hisp, state, county"
+    uploadCSV("census_raw", f"{csv_dir}/{census_filename}", cols=cols)
+    logger.info("Census CSV uploaded to postgresql.")
+
+    cols = "name, lat, lon, country, state"
+    uploadCSV("geocode_raw", f"{csv_dir}/{geocode_filename}", cols=cols)
+    logger.info("Geocode CSV uploaded to postgresql.")
 
     logger.info("Starting the weather pull.")
     weather_filename = f"{sanitized_dt}_weather_raw.csv"
@@ -51,5 +77,9 @@ def start():
         dt = usgs_start
         while dt <= usgs_end:
             logger.info(f"Running weather import for {dt.strftime('%Y-%m-%d')}, {g['lat']}, {g['lon']}")
-            weather_import("weather_raw", f"{csv_dir}/{weather_filename}", dt.strftime("%Y-%m-%d"), g["lat"], g["lon"])
+            if reprocess is not None and reprocess != 'False':
+                weather_import("weather_raw", f"{csv_dir}/{weather_filename}", dt.strftime("%Y-%m-%d"), g["lat"], g["lon"])
+
+            cols = "lat, lon, tz, date, units, cloud_cover, humidity, precipitation, temperature_min, temperature_max, pressure, wind"
+            uploadCSV("weather_raw", f"{csv_dir}/{weather_filename}", cols=cols)
             dt = dt + timedelta(hours=1)

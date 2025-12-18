@@ -1,6 +1,10 @@
 pipeline {
     agent any
     
+    environment {
+        REPROCESS = 'False'
+    }
+
     stages {
         stage('Upgrade pip') {
             steps {
@@ -41,6 +45,11 @@ pipeline {
 		    mkdir "$params.jenkins_log_dir"
 		    mkdir "$params.csv_dir"
 		"""
+
+		withFileParameter('csv_artifacts') {
+		   tar -xvzf '$csv_artifacts' raw_data/
+		   
+		}
 	    }
 	}
         stage('4. Data Integration (Postgres Load)') {
@@ -70,6 +79,15 @@ pipeline {
                 """
             }
         }
+	stage('6. Archive') {
+	    steps {
+	        sh """
+		    tar -cvzf logs/* logs_artifact.tar.gz
+		    tar -cvzf raw_data/* csv_artifacts.tar.gz
+                """
+		archiveArtifacts artifacts: '*.tar.gz', onlyIfSuccessful: true
+	    }
+	}
     }
     post {
         // This block runs after the entire pipeline finishes

@@ -85,11 +85,6 @@ def usgs_import(table_name, usgs_file, pull_start, pull_end):
     df.to_csv(usgs_file, index=False, encoding='utf-8')
     logger.info("CSV file for usgs data written.")
 
-    cols = "mag, place, time, updated, tz, felt, cdi, mmi, alert, status, tsunami, sig, net, code, nst, dmin, rms, gap, \"magType\", type, title, latitude, longitude"
-
-    uploadCSV(table_name, usgs_file, cols=cols)
-    logger.info("CSV file uploaded to postgresql.")
-
     # Get rid of stale data
     #if os.path.exists(usgs_file):
     #    os.remove(usgs_file)
@@ -135,11 +130,6 @@ def weather_import(table_name, weather_file, search_time, search_lat, search_lon
 
     df.to_csv(weather_file, index=False, encoding='utf-8')
     logger.info("Weather data written to CSV.")
-
-    cols = "lat, lon, tz, date, units, cloud_cover, humidity, precipitation, temperature_min, temperature_max, pressure, wind"
-
-    uploadCSV(table_name, weather_file, cols)
-    logger.info("CSV uploaded to postgresql.")
 
     # Get rid of stale data
     #if os.path.exists(weather_file):
@@ -201,11 +191,6 @@ def census_import(census_table, census_file, geocode_table, geocode_file):
     geocode_df = pd.json_normalize(geocode_result)
     geocode_df.to_csv(geocode_file, index=False, encoding='utf-8')
     logger.info("Geocode data written to CSV")
-
-    uploadCSV(census_table, census_file, ", ".join(census_cols))
-    logger.info("Census CSV uploaded to postgresql.")
-    uploadCSV(geocode_table, geocode_file, ", ".join(geocode_cols))
-    logger.info("Geocode CSV uploaded to postgresql.")
 
     # Get rid of stale data
     #if os.path.exists(census_file):

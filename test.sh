@@ -1,2 +1,0 @@
-cd ingestion
-ls -alrt
