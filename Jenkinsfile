@@ -5,6 +5,8 @@ pipeline {
         stage('Upgrade pip') {
             steps {
                 sh """
+                    #Adding ensurepip because this morning (20251218) got an error saying pip is not a recognized module...
+		    python3.12 -m ensurepip --upgrade
                     python3.12 -m pip install --upgrade pip setuptools wheel
                 """
             }
