@@ -1,6 +1,6 @@
 #User-defined libraries
 from lib.logger import setup_logger
-from ingestion.ingestion_lib import usgs_import, weather_import, census_import, invalidDirectory
+from ingestion.ingestion_lib import usgs_import, weather_import, census_import, invalidDirectory, parseConf 
 from datetime import datetime, timedelta
 from pathvalidate import sanitize_filename
 
@@ -17,6 +17,9 @@ def start():
     if invalidDirectory(csv_dir):
         logger.error(f"One, or both, of the csv or log directories are invalid.\n'{csv_dir}'. Check the environment the pipeline is running in for these environment variables.")
         sys.exit(5)
+
+    logger.info("Parsing configurations passed in...")
+    parseConf()
 
     logger.info("Ingestion starting.")
     usgs_end = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
