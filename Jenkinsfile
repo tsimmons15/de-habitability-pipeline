@@ -36,8 +36,8 @@ pipeline {
 	stage('3. Setup Jenkins file system, mainly log and csv dirs.') {
 	    steps {
 		sh '''
-		    mkdir ${jenkins_log_dir}
-		    mkdir ${csv_dir}
+		    mkdir "${jenkins_log_dir}"
+		    mkdir "${csv_dir}"
 		'''
 	    }
 	}
