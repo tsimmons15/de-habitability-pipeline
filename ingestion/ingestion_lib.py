@@ -12,7 +12,7 @@ api_endpoints = {
     "census":"https://api.census.gov/data/2019/pep/charagegroups"
 }
 
-logger = setup_logger("usgs_ingestion", "%(asctime)s | %(levelname)s | %(name)s | %(filename)s:%(lineno)d | %(message)s")
+logger = setup_logger("usgs_ingestion", "%(asctime)s | %(levelname)s | %(name)s | %(filename)s:%(lineno)d | %(message)s", debug=True)
 
 #Pull in the USGS data
 def usgs_import(table_name, usgs_file, pull_start, pull_end):
