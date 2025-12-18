@@ -1,4 +1,6 @@
-import logging, logging.handlers, os
+import logging, logging.handlers, os, sys
+
+
 
 def setup_logger(app_name, log_format, log_level = logging.INFO, debug=False):
     log_dir = os.environ.get("jenkins_log_dir")
