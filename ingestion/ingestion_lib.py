@@ -294,12 +294,16 @@ def parseConf():
     db_text = os.environ.get('db_conf')
     weather_key = os.environ.get('weather_key')
 
+    logger.info(f"The db_config text read in: {db_text}")
+    logger.info(f"The weather key text read in: {weather_key}")
     if not db_text or not weather_key:
         logger.error("Unable to parse weather api key or the db configuration environment variables. Please check them.")
         sys.exit(4)
 
     db_config = json.loads(db_text)
+    logger.info(f"The json parsed db_config: {db_config}")
     api_config = {"weather_key":weather_key}
+    logger.info(f"The parsed weather key: {api_config}")
 
 def invalidDirectory(directory):
     return not directory or not  os.path.exists(directory)
