@@ -1,7 +1,10 @@
-import logging, logging.handlers
+import logging, logging.handlers, os
 
 def setup_logger(app_name, log_format, log_level = logging.INFO, debug=False):
-    log_dir = "/home/ec2-user/ukus18nov/tsimmons/project/log"
+    log_dir = os.environ.get("jenkins_log_dir")
+    if not log_dir:
+        print(f"Unable to initialize the '{log_dir}'. Please check the environment the pipeline is running in.")
+        sys.exit(4)
     logger = logging.getLogger(app_name)
     logger.setLevel(log_level)
 

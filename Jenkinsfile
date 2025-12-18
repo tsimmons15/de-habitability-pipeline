@@ -5,7 +5,6 @@ pipeline {
         stage('Upgrade pip') {
             steps {
                 sh '''
-		    whereis python
                     python3.12 -m pip install --upgrade pip setuptools wheel
                 '''
             }
@@ -34,7 +33,15 @@ pipeline {
     	    }
     	}
 
-        stage('3. Data Integration (Postgres Load)') {
+	stage('3. Setup Jenkins file system, mainly log and csv dirs.') {
+	    steps {
+		sh '''
+		    mkdir ${jenkins_log_dir}
+		    mkdir ${csv_dir}
+		'''
+	    }
+	}
+        stage('4. Data Integration (Postgres Load)') {
             steps {
                 echo "Running Data Integration — Loading API data into Postgres..."
                 sh '''
@@ -43,8 +50,7 @@ pipeline {
                 '''
             }
         }
-        
-        stage('4. Run Silver Transformations') {
+        stage('5. Run Silver Transformations') {
             steps {
                 echo "Running Silver layer Spark transformations..."
                 sh '''
@@ -54,7 +60,7 @@ pipeline {
             }
         }
        
-        stage('5. Create Gold Table (Hive)') {
+        stage('6. Create Gold Table (Hive)') {
             steps {
                 sh '''
                     source .venv/bin/activate
@@ -67,6 +73,7 @@ pipeline {
         // This block runs after the entire pipeline finishes
         always {
             deleteDir() /* Deletes the workspace content */
+	    //HDFS upload of log files to log_dir.
         }
     }
 }

@@ -9,14 +9,13 @@ import os
 
 #CSV Directory path
 csv_dir = os.environ.get('csv_dir')
-log_dir = os.environ.get('log_dir')
 
 
 logger = setup_logger("main_ingestion", "%(asctime)s | %(levelname)s | %(name)s | %(filename)s:%(lineno)d | %(message)s")
 #API Calls, ingestion start
 def start():
-    if invalidDir(csv_dir) or invalidDir(log_dir):
-        logger.error(f"One, or both, of the csv or log directories are invalid.\n'{csv_dir}', '{log_dir}'. Check the environment the pipeline is running in for these environment variables.")
+    if invalidDir(csv_dir):
+        logger.error(f"One, or both, of the csv or log directories are invalid.\n'{csv_dir}'. Check the environment the pipeline is running in for these environment variables.")
         sys.exit(5)
 
     logger.info("Ingestion starting.")
