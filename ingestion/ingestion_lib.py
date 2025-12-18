@@ -303,7 +303,7 @@ def parseConf():
     api_config = {"weather_key":weather_key}
 
 def invalidDirectory(directory):
-    return not directory or not  os.file.exists(directory)
+    return not directory or not  os.path.exists(directory)
 
 
 # db configuration and api key details
