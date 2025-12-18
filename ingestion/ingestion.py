@@ -1,6 +1,6 @@
 #User-defined libraries
 from lib.logger import setup_logger
-from ingestion.ingestion_lib import usgs_import, weather_import, census_import
+from ingestion.ingestion_lib import usgs_import, weather_import, census_import, invalidDirectory
 from datetime import datetime, timedelta
 from pathvalidate import sanitize_filename
 
@@ -14,7 +14,7 @@ csv_dir = os.environ.get('csv_dir')
 logger = setup_logger("main_ingestion", "%(asctime)s | %(levelname)s | %(name)s | %(filename)s:%(lineno)d | %(message)s")
 #API Calls, ingestion start
 def start():
-    if invalidDir(csv_dir):
+    if invalidDirectory(csv_dir):
         logger.error(f"One, or both, of the csv or log directories are invalid.\n'{csv_dir}'. Check the environment the pipeline is running in for these environment variables.")
         sys.exit(5)
 
