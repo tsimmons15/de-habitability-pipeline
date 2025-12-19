@@ -247,7 +247,8 @@ def resetValueOrDefault(new_dict, new_key_list, old_dict, old_key_list, default=
     newValue = retrieveNestedValue(old_dict, old_key_list, default)
     logger.info(f"Retrieved newValue: {newValue}")
 
-    del old_dict[old_key_list[0]]
+    if old_key_list[0] in old_dict:
+        del old_dict[old_key_list[0]]
 
     return setNestedValue(new_dict, new_key_list, newValue)
 

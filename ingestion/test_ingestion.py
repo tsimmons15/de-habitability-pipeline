@@ -23,3 +23,14 @@ def test_resetValueOrDefault():
    
     resetValueOrDefault(test_dict, ['one'], test_dict, ['one', 'two', 'three', 'one'], None)
     assert test1 == test_dict
+
+def test_resetValueOrDefault_with_default():
+    test1 = {'one': 'testing'}
+    test_dict = {'one': {'two': {'three': {'one': 'testing', 'two':'thing', 'three':'thing2'}, 'four':'leaf'}}}
+
+    new_path = ['one']
+    old_path = ['one', 'two', 'six', 'one']
+    resetValueOrDefault(test_dict, new_path, test_dict, old_path, None)
+    assert test1 != test_dict
+    assert test_dict is not None
+    assert test_dict[new_path[-1]] == None
