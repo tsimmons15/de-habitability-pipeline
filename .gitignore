@@ -17,6 +17,7 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Environments
+.bashrc
 .env
 .envrc
 .venv

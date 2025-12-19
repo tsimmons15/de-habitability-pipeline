@@ -12,7 +12,7 @@ api_endpoints = {
     "census":"https://api.census.gov/data/2019/pep/charagegroups"
 }
 
-logger = setup_logger("usgs_ingestion", "%(asctime)s | %(levelname)s | %(name)s | %(filename)s:%(lineno)d | %(message)s", debug=True)
+logger = setup_logger("ingestion_library", "%(asctime)s | %(levelname)s | %(name)s | %(filename)s:%(lineno)d | %(message)s", debug=True)
 
 #Pull in the USGS data
 def usgs_import(table_name, usgs_file, pull_start, pull_end):
@@ -101,19 +101,19 @@ def weather_import(table_name, weather_file, search_time, search_lat, search_lon
 
     json_obj = json.loads(r.text)
     weather_result = json_obj.copy()
-    resetValueOrDefault(weather_result, ["cloud_cover","afternoon"], weather_result, ["cloud_cover"])
+    resetValueOrDefault(weather_result, ["cloud_cover"], weather_result, ["cloud_cover", "afternoon"])
     logger.info(f"Value of weather_result['cloud_cover']: {weather_result['cloud_cover']}")
 
-    resetValueOrDefault(weather_result, ["humidity", "afternoon"], weather_result, ["humidity"])
+    resetValueOrDefault(weather_result, ["humidity"], weather_result, ["humidity", "afternoon"])
     logger.info(f"Value of weather_result['humidity']: {weather_result['humidity']}")
 
-    resetValueOrDefault(weather_result, ["precipitation", "total"], weather_result, ["precipitation"])
+    resetValueOrDefault(weather_result, ["precipitation"], weather_result, ["precipitation", "total"])
     logger.info(f"Value of weather_result['precipitation']: {weather_result['precipitation']}")
 
-    resetValueOrDefault(weather_result, ["pressure", "afternoon"], weather_result, ["pressure"])
+    resetValueOrDefault(weather_result, ["pressure"], weather_result, ["pressure", "afternoon"])
     logger.info(f"Value of weather_result['pressure']: {weather_result['pressure']}")
 
-    resetValueOrDefault(weather_result, ["wind", "max", "speed"], weather_result, ["wind"])
+    resetValueOrDefault(weather_result, ["wind"], weather_result, ["wind", "max", "speed"])
     logger.info(f"Value of weather_result['wind']: {weather_result['wind']}")
     
     if "temperature" in weather_result:
@@ -245,6 +245,7 @@ def uploadCSV(table_name, csv_file, cols, sep=','):
 
 def resetValueOrDefault(new_dict, new_key_list, old_dict, old_key_list, default=None):
     newValue = retrieveNestedValue(old_dict, old_key_list, default)
+    logger.info(f"Retrieved newValue: {newValue}")
 
     del old_dict[old_key_list[0]]
 

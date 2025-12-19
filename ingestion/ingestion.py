@@ -1,6 +1,6 @@
 #User-defined libraries
 from lib.logger import setup_logger
-from ingestion.ingestion_lib import usgs_import, weather_import, census_import, invalidDirectory, parseConf 
+from ingestion.ingestion_lib import usgs_import, weather_import, census_import, invalidDirectory, parseConf, uploadCSV 
 from datetime import datetime, timedelta
 from pathvalidate import sanitize_filename
 
@@ -11,7 +11,7 @@ import os
 csv_dir = os.environ.get('csv_dir')
 
 
-logger = setup_logger("main_ingestion", "%(asctime)s | %(levelname)s | %(name)s | %(filename)s:%(lineno)d | %(message)s")
+logger = setup_logger("main_ingestion", "%(asctime)s | %(levelname)s | %(name)s | %(filename)s:%(lineno)d | %(message)s", debug=True)
 #API Calls, ingestion start
 def start():
     if invalidDirectory(csv_dir):
@@ -20,6 +20,10 @@ def start():
 
     logger.info("Parsing configurations passed in...")
     parseConf()
+
+    reprocess = os.environ.get('REPROCESS')
+    logger.info(f"Reprocess called? {reprocess}")
+
 
     logger.info("Ingestion starting.")
     usgs_end = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -31,9 +35,8 @@ def start():
     usgs_filename = f"{sanitized_dt}_usgs_raw.csv"
     usgs_filename = usgs_filename.replace(' ', '_')
     logger.info(f"USGS raw data directory: {csv_dir}/{usgs_filename}")
-    reprocess = os.environ.get('REPROCESS')
     
-    if reprocess is not None and reprocess != 'False':
+    if reprocess is not None and reprocess == 'False':
         usgs_import("usgs_raw", f"{csv_dir}/{usgs_filename}", usgs_start, usgs_end)
 
     cols = "mag, place, time, updated, tz, felt, cdi, mmi, alert, status, tsunami, sig, net, code, nst, dmin, rms, gap, \"magType\", type, title, latitude, longitude"
@@ -49,16 +52,16 @@ def start():
     logger.info(f"Geocode raw data directory: {csv_dir}/{geocode_filename}")
 
     geocode_json = {}
-    if reprocess is not None and reprocess != 'False':
+    if reprocess is not None and reprocess == 'False':
         geocode_json = census_import("census_raw", f"{csv_dir}/{census_filename}", "geocode_raw", f"{csv_dir}/{geocode_filename}")
     else:
         data = []
         with open(f"{csv_dir}/{census_filename}", mode='r', encoding='utf-8') as fh:
-        # DictReader maps each row to a dictionary with header keys
-        csv = csv.DictReader(fh)
-        for row in csv:
-            data.append(row)
-        geocode_json = json.dumps(data)
+            # DictReader maps each row to a dictionary with header keys
+            csv = csv.DictReader(fh)
+            for row in csv:
+                data.append(row)
+            geocode_json = json.dumps(data)
 
 
     cols = "name, pop, hisp, state, county"
@@ -77,7 +80,7 @@ def start():
         dt = usgs_start
         while dt <= usgs_end:
             logger.info(f"Running weather import for {dt.strftime('%Y-%m-%d')}, {g['lat']}, {g['lon']}")
-            if reprocess is not None and reprocess != 'False':
+            if reprocess is not None and reprocess == 'False':
                 weather_import("weather_raw", f"{csv_dir}/{weather_filename}", dt.strftime("%Y-%m-%d"), g["lat"], g["lon"])
 
             cols = "lat, lon, tz, date, units, cloud_cover, humidity, precipitation, temperature_min, temperature_max, pressure, wind"

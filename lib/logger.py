@@ -3,7 +3,7 @@ import logging, logging.handlers, os, sys
 
 
 def setup_logger(app_name, log_format, log_level = logging.INFO, debug=False):
-    log_dir = os.environ.get("jenkins_log_dir")
+    log_dir = os.environ.get("log_dir")
     if not log_dir:
         print(f"Unable to initialize the '{log_dir}'. Please check the environment the pipeline is running in.")
         sys.exit(4)

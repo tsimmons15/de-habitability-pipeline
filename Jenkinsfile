@@ -47,7 +47,10 @@ pipeline {
 		"""
 
 		withFileParameter('csv_artifacts') {
-		   tar -xvzf '$csv_artifacts' raw_data/
+		    sh """
+		        test -f "$csv_artifacts"
+		        tar -xvzf "$csv_artifacts" raw_data/
+		    """
 		   
 		}
 	    }

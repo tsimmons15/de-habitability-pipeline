@@ -20,7 +20,6 @@ def test_retrieveNestedValue():
 def test_resetValueOrDefault():
     test1 = {'one': 'testing'}
     test_dict = {'one': {'two': {'three': {'one': 'testing', 'two':'thing', 'three':'thing2'}, 'four':'leaf'}}}
-    
-    resetValueOrDefault(test_dict, ['one', 'two', 'three', 'one'], test_dict, ['one'], None)
-    print(test_dict)
+   
+    resetValueOrDefault(test_dict, ['one'], test_dict, ['one', 'two', 'three', 'one'], None)
     assert test1 == test_dict
