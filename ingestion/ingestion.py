@@ -1,6 +1,6 @@
 #User-defined libraries
 from lib.logger import setup_logger
-from ingestion.ingestion_lib import usgs_import, weather_import, census_import, invalidDirectory, parseConf, uploadCSV 
+from ingestion.ingestion_lib import usgs_import, weather_import, census_import, invalidDirectory, parseConf, uploadCSV, call_insert_truncate
 from datetime import datetime, timedelta
 from pathvalidate import sanitize_filename
 
@@ -24,6 +24,8 @@ def start():
     reprocess = os.environ.get('REPROCESS')
     logger.info(f"Reprocess called? {reprocess}")
 
+
+    call_insert_truncate()
 
     logger.info("Ingestion starting.")
     usgs_end = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)

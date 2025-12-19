@@ -203,11 +203,48 @@ def census_import(census_file, geocode_file):
 def getDict(keys, list):
     return dict(zip(keys, list))
 
-def uploadCSV(table_name, csv_file, cols, sep=','):
-    print(f"Uploading data from {csv_file} to {table_name} using {cols}")
+
+def call_insert_truncate():
+    logger.info("Truncating the insert tables.")
     conn = None
     try:
-        print(db_config)
+        conn = psycopg2.connect(**db_config)
+        cursor = conn.cursor()
+
+        # Prepare the stored procedure.
+        call = "CALL truncate_insert_tables()"
+        cursor.execute(call)
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        throw e
+    finally:
+        if conn:
+            cursor.close()
+            conn.close()
+
+
+def call_merge_raw():
+    logger.info("Truncating the insert tables.")
+    conn = None
+    try:
+        conn = psycopg2.connect(**db_config)
+        cursor = conn.cursor()
+
+        # Prepare the stored procedure.
+        call = "CALL merge_insert_raw()"
+        cursor.execute(call)
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        throw e
+    finally:
+        if conn:
+            cursor.close()
+            conn.close()
+
+def uploadCSV(table_name, csv_file, cols, sep=','):
+    logger.info(f"Uploading data from {csv_file} to {table_name} using {cols}")
+    conn = None
+    try:
         # Connect to the PostgreSQL database
         conn = psycopg2.connect(**db_config)
         cursor = conn.cursor()
