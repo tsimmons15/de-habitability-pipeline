@@ -15,7 +15,7 @@ api_endpoints = {
 logger = setup_logger("ingestion_library", "%(asctime)s | %(levelname)s | %(name)s | %(filename)s:%(lineno)d | %(message)s", debug=True)
 
 #Pull in the USGS data
-def usgs_import(table_name, usgs_file, pull_start, pull_end):
+def usgs_import(usgs_file, pull_start, pull_end):
     payload = {
         'format':'geojson',
         'starttime':pull_start,
@@ -90,7 +90,7 @@ def usgs_import(table_name, usgs_file, pull_start, pull_end):
     #    os.remove(usgs_file)
 
 
-def weather_import(table_name, weather_file, search_time, search_lat, search_lon):
+def weather_import(weather_file, search_time, search_lat, search_lon):
     payload = {
         "lat":search_lat,
         "lon":search_lon,
@@ -135,7 +135,7 @@ def weather_import(table_name, weather_file, search_time, search_lat, search_lon
     #if os.path.exists(weather_file):
     #    os.remove(weather_file)
 
-def census_import(census_table, census_file, geocode_table, geocode_file):
+def census_import(census_file, geocode_file):
     census_cols = ["name", "pop", "hisp", "state", "county"]
     geocode_cols = ["name", "lat", "lon", "country", "state"]
     
