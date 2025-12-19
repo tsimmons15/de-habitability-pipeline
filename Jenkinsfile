@@ -42,16 +42,15 @@ pipeline {
 	stage('3. Setup Jenkins file system, mainly log and csv dirs.') {
 	    steps {
 		sh """
-		    mkdir "$params.jenkins_log_dir"
+		    mkdir "$params.log_dir"
 		    mkdir "$params.csv_dir"
 		"""
-
-		withFileParameter('csv_artifacts') {
-		    sh """
-		        test -f "$csv_artifacts"
-		        tar -xvzf "$csv_artifacts" raw_data/
-		    """
-		   
+		script {
+		    file_name = params.csv_artifact
+		    if (file_name) {
+		        sh "tar -xvzf $csv_artifacts raw_data/ "
+			env.REPROCESS = True
+		    }
 		}
 	    }
 	}
