@@ -81,7 +81,7 @@ create table tsimmons.geocode_raw (
 	country VARCHAR(50),
 	state VARCHAR(50),
 	update_tm TIMESTAMPTZ default now(),
-	primary key (lat, lon)
+	primary key (name, lat, lon)
 );
 select * from tsimmons.geocode_raw;
 create table tsimmons.geocode_insert (
@@ -90,7 +90,7 @@ create table tsimmons.geocode_insert (
 	lon FLOAT,
 	country VARCHAR(50),
 	state VARCHAR(50),
-	primary key (lat, lon)
+	primary key (name, lat, lon)
 );
 
 create table tsimmons.weather_raw (
