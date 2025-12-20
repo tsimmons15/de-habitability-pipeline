@@ -172,9 +172,9 @@ def census_import(census_file, geocode_file):
         r = requests.get(api_endpoints["geocode"], params=geocode_payload)
         if r.status_code == requests.codes.ok and len(r.text) > 2:
             geocode_json = json.loads(r.text)
+            logger.info(f"The length of geocode_json: {len(geocode_json)}")
             for g in geocode_json:
-                if len(g) > 50:
-                    break
+                logger.info(f"Processing {g}")
                 if g["country"] == "US":
                     if "local_names" in g:
                         del g["local_names"]
