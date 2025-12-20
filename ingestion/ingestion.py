@@ -79,14 +79,9 @@ def start():
     weather_filename = weather_filename.replace(' ', '_')
     logger.info(f"Weather raw data directory: {csv_dir}/{weather_filename}")
     for g in geocode_json:
-        dt = usgs_start
-        while dt <= usgs_end:
-            logger.info(f"Running weather import for {dt.strftime('%Y-%m-%d')}, {g['lat']}, {g['lon']}")
-            if reprocess is not None and reprocess == 'False':
-                weather_import(f"{csv_dir}/{weather_filename}", dt.strftime("%Y-%m-%d"), g["lat"], g["lon"])
+        logger.info(f"Running weather import for {dt.strftime('%Y-%m-%d')}, {g['lat']}, {g['lon']}")
+        if reprocess is not None and reprocess == 'False':
+            weather_import(f"{csv_dir}/{weather_filename}", dt.strftime("%Y-%m-%d"), g["lat"], g["lon"])
 
-            cols = "lat, lon, tz, date, units, cloud_cover, humidity, precipitation, temperature_min, temperature_max, pressure, wind"
-            uploadCSV("weather_insert", f"{csv_dir}/{weather_filename}", cols=cols)
-            dt = dt + timedelta(hours=1)
-
-
+        cols = "lat, lon, tz, date, units, cloud_cover, humidity, precipitation, temperature_min, temperature_max, pressure, wind"
+        uploadCSV("weather_insert", f"{csv_dir}/{weather_filename}", cols=cols)

@@ -83,11 +83,11 @@ pipeline {
         }
 	stage('6. Archive') {
 	    steps {
-	        sh """
-		    tar -cvzf raw_data/* csv_artifacts.tar.gz
-		    tar -cvzf logs/* logs_artifact.tar.gz
+	        sh """ 
+		    tar -cvzf csv_artifacts.tar.gz "$params.csv_dir"*
+		    tar -cvzf logs_artifact.tar.gz "$params.log_dir"*
                 """
-		archiveArtifacts artifacts: '*.tar.gz', onlyIfSuccessful: true
+		archiveArtifacts artifacts: '*.tar.gz'
 	    }
 	}
     }
