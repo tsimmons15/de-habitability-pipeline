@@ -28,4 +28,7 @@ def main():
             logger.warn("Unknown option. Valid options: ingestion, cleaning or transforming")
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        logger.error(f"Uncaught exception {e}. Something is stopping progress from being made.")

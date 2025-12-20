@@ -216,7 +216,7 @@ def call_insert_truncate():
         cursor.execute(call)
     except Exception as e:
         logger.error(f"Error: {e}")
-        throw e
+        raise e
     finally:
         if conn:
             cursor.close()
@@ -235,7 +235,7 @@ def call_merge_raw():
         cursor.execute(call)
     except Exception as e:
         logger.error(f"Error: {e}")
-        throw e
+        raise e
     finally:
         if conn:
             cursor.close()
