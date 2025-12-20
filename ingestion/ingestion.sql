@@ -15,9 +15,6 @@ create table tsimmons.usgs_raw (
 	sig INT,
 	net VARCHAR(50),
 	code VARCHAR(50),
-	ids VARCHAR(50),
-	sources VARCHAR(50),
-	types VARCHAR(50),
 	nst INT,
 	dmin FLOAT,
 	rms FLOAT,
@@ -46,9 +43,6 @@ create table tsimmons.usgs_insert (
 	sig INT,
 	net VARCHAR(50),
 	code VARCHAR(50),
-	ids VARCHAR(50),
-	sources VARCHAR(50),
-	types VARCHAR(50),
 	nst INT,
 	dmin FLOAT,
 	rms FLOAT,
@@ -141,14 +135,11 @@ BEGIN
 	truncate tsimmons.geocode_insert;
 	truncate tsimmons.census_insert;
 	truncate tsimmons.weather_insert;
-    
-    -- Commit the transaction
-    COMMIT;
 EXCEPTION WHEN OTHERS THEN
-	ROLLBACK;
 	RAISE;
 END;
 $$;
+
 
 CREATE OR REPLACE PROCEDURE merge_insert_raw()
 LANGUAGE plpgsql
@@ -160,11 +151,11 @@ BEGIN
 	USING tsimmons.weather_insert AS src
 	ON raw.lat = src.lat and raw.lon = src.lon and raw.date = src.date
 	WHEN MATCHED THEN
-    	UPDATE SET raw.lat = src.lat, raw.lon = src.lon, raw.tz = src.tz,
-							raw.date = src.date, raw.units = src.units, raw.cloud_cover = src.cloud_cover,
-							raw.humidity = src.humidity, raw.precipitation = src.precipitation, 
-							raw.temperature_min = src.temperature_min, raw.temperature_max = src.temperature_max,
-							raw.pressure = src.pressure, raw.wind = src.wind
+    	UPDATE SET lat = src.lat, lon = src.lon, tz = src.tz,
+							date = src.date, units = src.units, cloud_cover = src.cloud_cover,
+							humidity = src.humidity, precipitation = src.precipitation, 
+							temperature_min = src.temperature_min, temperature_max = src.temperature_max,
+							pressure = src.pressure, wind = src.wind
 	WHEN NOT MATCHED THEN
     	INSERT (lat, lon, tz, date, units, cloud_cover, humidity, precipitation,
 				temperature_min, temperature_max, pressure, wind) VALUES 
@@ -175,42 +166,33 @@ BEGIN
 	USING tsimmons.geocode_insert AS src
 	ON raw.lat = src.lat and raw.lon = src.lon
 	WHEN MATCHED THEN
-    	UPDATE SET raw.name = src.name, raw.lat = src.lat, raw.lon = src.lon, 
-				raw.country = src.country, raw.state = src.state
+    	UPDATE SET name = src.name, lat = src.lat, lon = src.lon, country = src.country, state = src.state
 	WHEN NOT MATCHED THEN
-    	INSERT (name, lat, lon, country, state) VALUES (src.name, src.lat,
-									src.lon, src.country, src.state);
+    	INSERT (name, lat, lon, country, state) VALUES (src.name, src.lat, src.lon, src.country, src.state);
 
 	MERGE INTO tsimmons.census_raw AS raw
 	USING tsimmons.census_insert AS src
 	ON raw.name = src.name
 	WHEN MATCHED THEN
-    	UPDATE SET raw.name = src.name, raw.pop = src.pop, raw.hisp = src.hisp, raw.state = src.state,
-							raw.county = src.county
+    	UPDATE SET name = src.name, pop = src.pop, hisp = src.hisp, state = src.state, county = src.county
 	WHEN NOT MATCHED THEN
-    	INSERT (name, pop, hisp, state, county) VALUES (src.name, src.pop, src.hisp, 
-								src.state, src.county);
+    	INSERT (name, pop, hisp, state, county) VALUES (src.name, src.pop, src.hisp, src.state, src.county);
 
 	MERGE INTO tsimmons.usgs_raw AS raw
 	USING tsimmons.usgs_insert AS src
 	ON raw.place = src.place and raw.time = src.time
 	WHEN MATCHED THEN
-    	UPDATE SET raw.mag = src.mag, raw.place = src.place, raw.time = src.time, raw.updated = src.updated,
-								raw.tz = src.tz, raw.felt = src.felt, raw.cdi = src.cdi, raw.mmi = src.mmi, raw.alert = src.alert,
-								raw.status = src.status, raw.tsunami = src.tsunami, raw.sig = src.sig, raw.net = src.net, raw.code = src.code,
-								raw.ids = src.ids, raw.sources = src.sources, raw.types = src.types, raw.nst = src.nst, raw.dmin = src.dmin, 
-								raw.rms = src.rms, raw.gap = src.gap, raw."magType" = src."magType", raw.type = src.type, raw.title = src.title, raw.latitude = src.latitude,
-								raw.longitude = src.longitude
+    	UPDATE SET mag = src.mag, place = src.place, time = src.time, updated = src.updated, tz = src.tz, 
+					felt = src.felt, cdi = src.cdi, mmi = src.mmi, alert = src.alert, status = src.status, 
+					tsunami = src.tsunami, sig = src.sig, net = src.net, code = src.code, nst = src.nst, 
+					dmin = src.dmin, rms = src.rms, gap = src.gap, "magType" = src."magType", type = src.type, 
+					title = src.title, latitude = src.latitude, longitude = src.longitude
 	WHEN NOT MATCHED THEN
-    	INSERT (mag, place, time, updated, tz, felt, cdi, mmi, alert, status, tsunami, sig, net, code, ids, sources, types, nst,
-dmin, rms, gap, "magType", type, title, latitude, longitude) VALUES (src.mag, src.place, src.time, src.updated, src.tz, src.felt, src.cdi, 
-			src.mmi, src.alert, src.status, src.tsunami, src.sig, src.net, src.code, src.ids, src.sources, src.types, src.nst,
-			src.dmin, src.rms, src.gap, src."magType", src.type, src.title, src.latitude, src.longitude);
-
-    -- Commit the transaction
-    COMMIT;
+    	INSERT (mag, place, time, updated, tz, felt, cdi, mmi, alert, status, tsunami, sig, net, code, nst, dmin, rms, gap, "magType", 
+			type, title, latitude, longitude) VALUES (src.mag, src.place, src.time, src.updated, src.tz, src.felt, src.cdi, src.mmi, 
+			src.alert, src.status, src.tsunami, src.sig, src.net, src.code, src.nst, src.dmin, src.rms, src.gap, src."magType", 
+			src.type, src.title, src.latitude, src.longitude);
 EXCEPTION WHEN OTHERS THEN
-	ROLLBACK;
 	RAISE;
 END;
 $$;

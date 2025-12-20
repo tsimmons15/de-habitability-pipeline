@@ -214,8 +214,10 @@ def call_insert_truncate():
         # Prepare the stored procedure.
         call = "CALL truncate_insert_tables()"
         cursor.execute(call)
+        conn.commit()
     except Exception as e:
         logger.error(f"Error: {e}")
+        conn.rollback()
         raise e
     finally:
         if conn:
@@ -233,8 +235,10 @@ def call_merge_raw():
         # Prepare the stored procedure.
         call = "CALL merge_insert_raw()"
         cursor.execute(call)
+        conn.commit()
     except Exception as e:
         logger.error(f"Error: {e}")
+        conn.rollback()
         raise e
     finally:
         if conn:

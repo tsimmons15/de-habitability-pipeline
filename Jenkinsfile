@@ -84,8 +84,8 @@ pipeline {
 	stage('6. Archive') {
 	    steps {
 	        sh """
-		    tar -cvzf logs/* logs_artifact.tar.gz
 		    tar -cvzf raw_data/* csv_artifacts.tar.gz
+		    tar -cvzf logs/* logs_artifact.tar.gz
                 """
 		archiveArtifacts artifacts: '*.tar.gz', onlyIfSuccessful: true
 	    }
