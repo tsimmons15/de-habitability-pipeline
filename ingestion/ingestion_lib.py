@@ -181,6 +181,8 @@ def census_import(census_file, geocode_file):
                     logger.info(f"Geocode result found, appending {g}")
                     #There's a possibility of duplicates, so use a set to make sure no duplicates slip in.
                     geocode_set.add(g)
+
+                    logger.info("Appended.")
     
         else:
             logger.warn(f"Unable to get details for {area_name}({area}) in {state}")
