@@ -149,7 +149,7 @@ def census_import(census_file, geocode_file):
     }
     r = requests.get(api_endpoints["census"], params=payload)
 
-    geocode_result = []
+    geocode_set = set()
     census_result = []
     json_obj = json.loads(r.text)
     for c in json_obj[1:]:
@@ -179,7 +179,8 @@ def census_import(census_file, geocode_file):
                     if "local_names" in g:
                         del g["local_names"]
                     logger.info(f"Geocode result found, appending {g}")
-                    geocode_result.append(g)
+                    #There's a possibility of duplicates, so use a set to make sure no duplicates slip in.
+                    geocode_set.add(g)
     
         else:
             logger.warn(f"Unable to get details for {area_name}({area}) in {state}")
@@ -188,6 +189,7 @@ def census_import(census_file, geocode_file):
     census_df.to_csv(census_file, index=False, encoding='utf-8')
     logger.info("Census data written to CSV")
 
+    geocode_result = list(geocode_set)
     geocode_df = pd.json_normalize(geocode_result)
     geocode_df.to_csv(geocode_file, index=False, encoding='utf-8')
     logger.info("Geocode data written to CSV")
