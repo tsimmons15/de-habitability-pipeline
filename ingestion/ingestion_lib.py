@@ -180,7 +180,7 @@ def census_import(census_file, geocode_file):
                         del g["local_names"]
                     logger.info(f"Geocode result found, appending {g}")
                     #There's a possibility of duplicates, so use a set to make sure no duplicates slip in.
-                    geocode_set.add(g)
+                    geocode_set.add(json.dumps(g))
 
                     logger.info("Appended.")
     
@@ -191,7 +191,9 @@ def census_import(census_file, geocode_file):
     census_df.to_csv(census_file, index=False, encoding='utf-8')
     logger.info("Census data written to CSV")
 
-    geocode_result = list(geocode_set)
+    geocode_result = []
+    for x in geocode_set:
+        geocode_result.append(json.loads(x))
     geocode_df = pd.json_normalize(geocode_result)
     geocode_df.to_csv(geocode_file, index=False, encoding='utf-8')
     logger.info("Geocode data written to CSV")
