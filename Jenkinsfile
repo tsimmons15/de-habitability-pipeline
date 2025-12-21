@@ -75,7 +75,9 @@ pipeline {
                 echo "Running Silver layer Spark transformations..."
                 sh """
                     source .venv/bin/activate
-		    #python -m main cleaning
+		    zip -r cleaning.zip cleaning
+		    tar -czvf pyspark_venv.tar.gz .venv
+		    spark-submit --master local --py-files cleaning.zip --archives pyspark_venv.tar.gz main.py cleaning
                 """
             }
         }
@@ -84,7 +86,9 @@ pipeline {
             steps {
                 sh """
                     source .venv/bin/activate
-		    #python -m main transformation
+		    zip -r transformation.zip transformation
+		    tar -czvf pyspark_venv.tar.gz .venv
+		    spark-submit --master local --py-files transformation.zip --archives pyspark_venv.tar.gz main.py transformation
                 """
             }
         }
@@ -92,6 +96,7 @@ pipeline {
 	    steps {
 	        sh """ 
 		    tar -cvzf csv_artifacts.tar.gz "$params.csv_dir"*
+		    tar -cvzf medallion_layers.tar.gz "$params.final_storage"*
 		    tar -cvzf logs_artifact.tar.gz "$params.log_dir"*
                 """
 		archiveArtifacts artifacts: '*.tar.gz'

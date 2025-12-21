@@ -1,7 +1,7 @@
 from lib.spark import createSpark
 from lib.logger import setup_logger
 
-from pyspark.sql.functions import coalesce, col, floor, lit, row_number
+from pyspark.sql.functions import coalesce, col, floor, lit, row_number, date_format, year, quarter, month, dayofmonth, week_of_year,date_trunc, last_day 
 from pyspark.sql.window import Window
 from geopy.distance import great_circle
 
@@ -111,6 +111,44 @@ def start():
 
     # Now that weather and usgs are both lat/loc tied to placenames with the same lat/lon source, join on the lat/lon to provide final table
     attribute_table = weather_loc.join(usgs_loc, on=['geo_lat', 'geo_lon'], how="left")
-    
 
+    date_bounds = fact_weather_df.select(
+        F.min("date").alias("min_date"),
+        F.max("date").alias("max_date")
+    ).collect()[0]
+
+    start_date = date_bounds["min_date"]
+    end_date   = date_bounds["max_date"]
+
+    dim_date = (
+        spark
+        .sql(f"SELECT sequence(to_date('{start_date}'), to_date('{end_date}'), interval 1 day) AS date")
+        .select(F.explode("date").alias("date"))
+    )
+
+    dim_date = (
+        dim_date
+        .withColumn("date_key", date_format("date", "yyyyMMdd").cast("int"))
+        .withColumn("year", year("date"))
+        .withColumn("quarter", quarter("date"))
+        .withColumn("month", month("date"))
+        .withColumn("month_name", date_format("date", "MMMM"))
+        .withColumn("month_short", date_format("date", "MMM"))
+        .withColumn("day", dayofmonth("date"))
+        .withColumn("day_of_week", date_format("date", "u").cast("int"))  # 1=Mon
+        .withColumn("day_name", date_format("date", "EEEE"))
+        .withColumn("week_of_year", weekofyear("date"))
+        .withColumn("iso_year", year(date_trunc("week", "date")))
+        .withColumn("year_month", date_format("date", "yyyy-MM"))
+        .withColumn("is_weekend", col("day_of_week").isin(6, 7))
+        .withColumn("is_month_start", col("day") == 1)
+        .withColumn("is_month_end", last_day("date") == col("date"))
+        .withColumn("is_year_start", (month("date") == 1) & (col("day") == 1))
+        .withColumn("is_year_end", (month("date") == 12) & (col("day") == 31))
+    )
+
+
+
+
+    # To write: dim_date, usgs_df, attribute_table
 
