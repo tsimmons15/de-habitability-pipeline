@@ -44,6 +44,13 @@ pipeline {
 		sh """
 		    mkdir "$params.log_dir"
 		    mkdir "$params.csv_dir"
+		    mkdir "$params.data_storage"
+		    mkdir -p "$params.data_storage"/bronze
+		    ln -s "$params.csv_dir" "$params.data_storage"/bronze/output
+		    mkdir -p "params.data_storage"/silver/input
+		    mkdir -p "$params.data_storage"/silver/output
+		    mkdir -p "$params.data_storage"/gold/input
+		    mkdir -p "$params.data_storage"/gold/output
 		"""
 		script {
 		    file_name = params.csv_artifact

@@ -1,5 +1,7 @@
 from lib.spark import createSpark
 from lib.logger import setup_logger
+from cleaning.cleaning_lib import getData()
+
 import os
 
 storage_directory = f"{os.environ.get('final_storage')}"
@@ -13,6 +15,8 @@ def start():
         raise Exception("Data storage location is missing. Unable to proceed.")
     if not os.path.exists(f"{cleaning_directory}/input/"):
         raise Exception("Missing cleaning directory input, nothing to do...")
+
+    getData()
 
     spark = createSpark()
 
