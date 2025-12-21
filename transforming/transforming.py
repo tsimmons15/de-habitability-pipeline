@@ -1,14 +1,116 @@
 from lib.spark import createSpark
 from lib.logger import setup_logger
 
+from pyspark.sql.functions import coalesce, col, floor, lit, row_number
+from pyspark.sql.window import Window
+from geopy.distance import great_circle
+
 logger = setup_logger("main_transforming", "%(asctime)s | %(levelname)s | %(name)s | %(filename)s:%(lineno)d | %(message)s") 
+
+storage_directory = f"{os.environ.get('final_storage')}"
+transformation_directory = f"{storage_directory}/gold"
 
 #Load in the data to the dataframes
 def start():
+    if not storage_directory or not transformation_directory:
+        raise Exception("Data storage location is missing. Unable to proceed.")
+    if not os.path.exists(f"{transforming_directory}/input/"):
+        raise Exception("Missing cleaning directory input, nothing to do...")
+    if not os.path.exists(f"{transforming_directory}/output/"):
+        os.makedirs(f"{transforming_directory}/output/")
+
     spark = createSpark()
 
+    geo_bins = 0.7
+
+    for table in tables:
+        getData(table)
+
+
     logger.info("Loading the dataframes...")
-    usgs_df = spark.read.parquet(f"{hdfs_path}/usgs_raw.parquet")
-    geocode = spark.read.parquet(f"{hdfs_path}/geocode_raw.parquet")
-    census = spark.read.parquet(f"{hdfs_path}/census_raw.parquet")
-    weather = spark.read.parquet(f"{hdfs_path}/weather_raw.parquet")
+    usgs_df = spark.read.csv(f"{transforming_directory}/input/usgs_raw.csv", header=True)
+    geocode_df = spark.read.csv(f"{transforming_directory}/input/geocode_raw.cvs", header=True)
+    census_df = spark.read.csv(f"{transforming_directory}/input/census_raw.cvs", header=True)
+    weather_df = spark.read.csv(f"{transforming_directory}/input/weather_raw.cvs", header=True)
+
+
+
+
+    # Prepare to join the geocode/census data, so I'll have a human-readable way to refer to lat/lon pairs:
+    geocode = geocode_df.select(
+        col("name_key"),
+        col("name").alias("geocode_name"), # Coalesce will provide a means of combining the two name columns, so 
+        col("lat")cast("double").alias("geo_lat"), # geo_lat/geo_lon will show up useful later in the joins/pairing with USGS/Weather data
+        col("lon").cast("double").alias("geo_lon"),
+        col("country"),
+        col("state")
+    )
+
+    census = census_df.select(
+        col("name_key"),
+        col("name").alias("census_name"),
+        col("pop").cast("long")
+    )
+
+    location_dimension = geocode.join(census, on="name_key", how="left").withColumn("area_name", coalesce("geocode_name", "census_name"))
+    # Now that the two columns have been coalesced, they're not needed anymore.
+    location_dimension.drop(["census_name", "geocode_name")
+
+
+    # Turn the lat/lon values into (effectively) an integer to give the join something easier to work on
+    # geo_bins is a fudge factor to give some room for nearby lat/lon pairs to match.
+    loc_binned = (location_dimension
+        .withColumn("lat_bin", floor(col("geo_lat") / lit(geo_bins)))
+        .withColumn("lon_bin", floor(col("geo_lon") / lit(geo_bins)))
+    )
+
+    weather_binned = (weather_df
+        .withColumn("lat_bin", floor(col("lat") / lit(geo_bins)))
+        .withColumn("lon_bin", floor(col("lon") / lit(geo_bins)))
+    )
+
+    usgs_binned = (usgs_df
+        .withColumn("lat_bin", floor(col("latitude") / lit(geo_bins)))
+        .withColumn("lat_bin", floor(col("longitude") / lit(geo_bins)))
+    )
+
+    weather_candidates = weather_binned.join(loc_binned, on=["lat_bin", "lon_bin"], how="left")
+    
+    # Using the haversine formula, which approximates earth as a circle to calculate distances between two points
+    # This will be used in case there are multiple lat/lon for a given area, which shouldn't happen, but better safe than sorry
+    weather_candidates = weather_candidates.withColumn("dist_miles", great_circle((col("lat"), col("lon")), (col("geo_lat"), col("geo_lon"))).miles)
+    
+    # Used in the determination of whether a row is the same as another, uses pyspark.sql.function functions to provide lazy evaluating
+    weather_id = sha2(concat_ws("||", "date", "lat", "lon"), 256)
+    # This is where the lazy evaluating becomes tied to a weather row.
+    weather_candidates = weather_candidates.withColumn("weather_id", w_id)
+    
+    # Determines a rank of duplicate weather_id entries, if there are any
+    w = Window.partitionBy("weather_id").orderBy(col("dist_miles").asc_nulls_last())
+    # Filter out all but the closest distances using the rank
+    weather_loc = (weather_candidates
+        .withColumn("rnk", row_number().over(w))
+        .filter(col("rnk") == 1)
+        .drop("rnk")
+    )
+    
+    # Do the same above for the USGS data, since place is not as reliable as lat/lon
+    usgs_candidates = usgs_binned.join(loc_binned, on=["lat_bin", "lon_bin"], how="left")
+
+    usgs_candidates = usgs_candidates.withColumn("dist_miles", great_circle((col("latitude"), col("longitude")), (col("geo_lat"), col("geo_lon"))).miles)
+
+    usgs_id = sha2(concat_ws("||", "time", "latitude", "longitude"), 256)
+    usgs_candidates = usgs_candidates.withColumn("usgs_id", usgs_id)
+
+    w = Window.partitionBy("usgs_id").orderBy(col("dist_miles").asc_nulls_last())
+    usgs_loc = (usgs_candidates
+        .withColumn("rnk", row_number().over(w))
+        .filter(col("rnk") == 1)
+        .drop("rnk")
+    )
+
+    # Now that weather and usgs are both lat/loc tied to placenames with the same lat/lon source, join on the lat/lon to provide final table
+    attribute_table = weather_loc.join(usgs_loc, on=['geo_lat', 'geo_lon'], how="left")
+    
+
+
