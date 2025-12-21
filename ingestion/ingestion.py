@@ -79,7 +79,7 @@ def start():
     weather_filename = weather_filename.replace(' ', '_')
     logger.info(f"Weather raw data directory: {csv_dir}/{weather_filename}")
     for g in geocode_json:
-        logger.info(f"Running weather import for {dt.strftime('%Y-%m-%d')}, {g['lat']}, {g['lon']}")
+        logger.info(f"Running weather import for {usgs_end.strftime('%Y-%m-%d')}, {g['lat']}, {g['lon']}")
         if reprocess is not None and reprocess == 'False':
             weather_import(f"{csv_dir}/{weather_filename}", usgs_end.strftime("%Y-%m-%d"), g["lat"], g["lon"])
 
