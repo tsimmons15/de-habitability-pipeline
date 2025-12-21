@@ -1,7 +1,7 @@
 from lib.spark import createSpark
 from lib.logger import setup_logger
 
-from pyspark.sql.functions import coalesce, col, floor, lit, row_number, date_format, year, quarter, month, dayofmonth, week_of_year,date_trunc, last_day 
+from pyspark.sql.functions import coalesce, col, floor, lit, row_number, min, max, date_format, year, quarter, month, dayofmonth, week_of_year,date_trunc, last_day, explode 
 from pyspark.sql.window import Window
 from geopy.distance import great_circle
 
@@ -113,8 +113,8 @@ def start():
     attribute_table = weather_loc.join(usgs_loc, on=['geo_lat', 'geo_lon'], how="left")
 
     date_bounds = fact_weather_df.select(
-        F.min("date").alias("min_date"),
-        F.max("date").alias("max_date")
+        min("date").alias("min_date"),
+        max("date").alias("max_date")
     ).collect()[0]
 
     start_date = date_bounds["min_date"]
@@ -123,7 +123,7 @@ def start():
     dim_date = (
         spark
         .sql(f"SELECT sequence(to_date('{start_date}'), to_date('{end_date}'), interval 1 day) AS date")
-        .select(F.explode("date").alias("date"))
+        .select(explode("date").alias("date"))
     )
 
     dim_date = (
@@ -150,5 +150,7 @@ def start():
 
 
 
-    # To write: dim_date, usgs_df, attribute_table
-
+    # To write: dim_date, location_dimension, attribute_table
+    attribute_table.write.csv(f"{transforming_directory}/output/attribute_table.csv", header=True)
+    location_dimension.write.csv(f"{transforming_directory}/output/location_dimension.csv", header=True)
+    dim_date.write.csv("{transforming_directory}/output/dim_date.csv", header=True)
