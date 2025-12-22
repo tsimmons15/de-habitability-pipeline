@@ -40,7 +40,7 @@ def start():
     geocode = geocode_df.select(
         col("name_key"),
         col("name").alias("geocode_name"), # Coalesce will provide a means of combining the two name columns, so 
-        col("lat")cast("double").alias("geo_lat"), # geo_lat/geo_lon will show up useful later in the joins/pairing with USGS/Weather data
+        col("lat").cast("double").alias("geo_lat"), # geo_lat/geo_lon will show up useful later in the joins/pairing with USGS/Weather data
         col("lon").cast("double").alias("geo_lon"),
         col("country"),
         col("state")
