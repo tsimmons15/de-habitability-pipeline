@@ -1,6 +1,6 @@
 from lib.logger import setup_logger
 
-import psycopg2
+import psycopg2, os
 from pyspark.sql.functions import col
 
 logger = setup_logger("transformation_library", "%(asctime)s | %(levelname)s | %(name)s | %(filename)s:%(lineno)d | %(message)s",debug=True)
