@@ -1,7 +1,7 @@
 from lib.spark import createSpark
 from lib.logger import setup_logger
 
-from pyspark.sql.functions import coalesce, col, floor, lit, row_number, min, max, date_format, year, quarter, month, dayofmonth, week_of_year,date_trunc, last_day, explode 
+from pyspark.sql.functions import coalesce, col, floor, lit, row_number, min, max, date_format, year, quarter, month, dayofmonth, weekofyear as week_of_year,date_trunc, last_day, explode 
 from pyspark.sql.window import Window
 from geopy.distance import great_circle
 
