@@ -108,4 +108,4 @@ def start():
     for data in upload_data:
         updateCleaning(data["table_name"], data["cols"])
     
-   call_merge_raw() 
+    call_merge_raw() 
