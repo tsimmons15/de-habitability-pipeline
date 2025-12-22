@@ -1,6 +1,6 @@
 from lib.logger import setup_logger
 
-import psycopg2
+import psycopg2, os
 
 
 logger = setup_logger("ingestion_library", "%(asctime)s | %(levelname)s | %(name)s | %(filename)s:%(lineno)d | %(message)s",debug=True)
