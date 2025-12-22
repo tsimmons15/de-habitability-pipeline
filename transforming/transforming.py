@@ -113,7 +113,7 @@ def start():
     # Now that weather and usgs are both lat/loc tied to placenames with the same lat/lon source, join on the lat/lon to provide final table
     attribute_table = weather_loc.join(usgs_loc, on=['geo_lat', 'geo_lon'], how="left")
 
-    date_bounds = fact_weather_df.select(
+    date_bounds = attribute_table.select(
         min("date").alias("min_date"),
         max("date").alias("max_date")
     ).collect()[0]
