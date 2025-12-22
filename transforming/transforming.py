@@ -54,7 +54,7 @@ def start():
 
     location_dimension = geocode.join(census, on="name_key", how="left").withColumn("area_name", coalesce("geocode_name", "census_name"))
     # Now that the two columns have been coalesced, they're not needed anymore.
-    location_dimension.drop(["census_name", "geocode_name")
+    location_dimension.drop(["census_name", "geocode_name"])
 
 
     # Turn the lat/lon values into (effectively) an integer to give the join something easier to work on
