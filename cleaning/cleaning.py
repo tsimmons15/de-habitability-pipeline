@@ -93,10 +93,10 @@ def start():
 
     
     # Write the output to the cleaning output directory, ready to update the table.
-    weather_df.write.csv(f"{cleaning_directory/output/weather.csv", header=True, mode="overwrite")
-    usgs_df.write.csv(f"{cleaning_directory/output/usgs.csv", header=True, mode="overwrite")
-    geocode_df.write.csv(f"{cleaning_directory/output/geocode.csv", header=True, mode="overwrite")
-    census_df.write.csv(f"{cleaning_directory/output/census.csv", header=True, mode="overwrite")
+    weather_df.write.csv(f"{cleaning_directory}/output/weather.csv", header=True, mode="overwrite")
+    usgs_df.write.csv(f"{cleaning_directory}/output/usgs.csv", header=True, mode="overwrite")
+    geocode_df.write.csv(f"{cleaning_directory}/output/geocode.csv", header=True, mode="overwrite")
+    census_df.write.csv(f"{cleaning_directory}/output/census.csv", header=True, mode="overwrite")
 
     # Update the pulled data with the cleaned
     upload_data = [
