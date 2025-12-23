@@ -76,7 +76,7 @@ pipeline {
                 sh """
                     source .venv/bin/activate
 		    zip -r cleaning.zip cleaning
-		    tar -czvf pyspark_venv.tar.gz .venv
+		    tar -czvf pyspark_venv.tar.gz .venv > /dev/null
 		    spark-submit --master local --py-files cleaning.zip --archives pyspark_venv.tar.gz main.py cleaning
                 """
             }
@@ -87,7 +87,7 @@ pipeline {
                 sh """
                     source .venv/bin/activate
 		    zip -r transformation.zip transformation
-		    tar -czvf pyspark_venv.tar.gz .venv
+		    tar -czvf pyspark_venv.tar.gz .venv > /dev/null
 		    spark-submit --master local --py-files transformation.zip --archives pyspark_venv.tar.gz main.py transformation
                 """
             }
@@ -103,11 +103,11 @@ pipeline {
 	    }
 	}
     }
-    post {
+    /*post {
         // This block runs after the entire pipeline finishes
         always {
             deleteDir() /* Deletes the workspace content */
 	    //HDFS upload of log files to log_dir.
         }
-    }
+    }*/
 }
