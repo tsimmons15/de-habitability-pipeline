@@ -24,6 +24,7 @@ def start():
     reprocess = os.environ.get('REPROCESS')
     logger.info(f"Reprocess called? {reprocess}")
 
+    share_logger(logger)
 
     call_insert_truncate()
 

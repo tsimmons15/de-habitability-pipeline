@@ -12,7 +12,12 @@ api_endpoints = {
     "census":"https://api.census.gov/data/2019/pep/charagegroups"
 }
 
-logger = setup_logger("ingestion_library", "%(asctime)s | %(levelname)s | %(name)s | %(filename)s:%(lineno)d | %(message)s", debug=True)
+logger = None
+
+
+def share_logger(main_logger):
+    global logger
+    logger = main_logger
 
 #Pull in the USGS data
 def usgs_import(usgs_file, pull_start, pull_end):
